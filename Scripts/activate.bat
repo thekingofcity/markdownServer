@@ -1,5 +1,5 @@
 @echo off
-set "VIRTUAL_ENV=G:\markdownServer"
+set "VIRTUAL_ENV=F:\markdownServer"
 
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"

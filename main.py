@@ -8,6 +8,8 @@ https://gist.github.com/mdonkers/63e115cc0c79b4f6b8b3a6b797e485c7
 from http import cookies
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
+import sqlite3
+from dbC import dbC
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
@@ -25,17 +27,35 @@ class S(BaseHTTPRequestHandler):
         post_data = self.rfile.read(content_length) # <--- Gets the data itself
         # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
         #         str(self.path), str(self.headers), post_data.decode('utf-8'))
-        logging.info("%s",post_data.decode('utf-8'))
+        post_data_dict = eval(post_data) # <--- Converts the data to dict
+        print(post_data_dict['name'])
+        print(post_data_dict['password'])
+        user = {'name':post_data_dict['name'], 'password':post_data_dict['password']}
+        db = dbC()
+        cookie = db.login(user)
+        print(cookie)
+        if(cookie):
+            # The next line will do send_response(200) end_headers().
+            # self._set_response()
 
-        # The next line will do send_response(200) end_headers().
-        # self._set_response()
-
-        # Cus this is a cross domain setting cookies, so the following helps.
-        # https://www.cnblogs.com/anai/p/4238777.html
-        self.send_response(200)
-        self.send_header('Set-Cookie', 'fig=newton')
-        self.end_headers()
-        self.wfile.write("success ".format(self.path).encode('utf-8'))
+            # Cus this is a cross domain setting cookies, so the following helps.
+            # https://www.cnblogs.com/anai/p/4238777.html
+            self.send_response(200)
+            UID = "UID=" + cookie
+            name = "name=" + post_data_dict['name']
+            self.send_header('Access-Control-Allow-Credentials', 'true')
+            self.send_header('Access-Control-Allow-Origin', 'https://127.0.0.1')
+            self.send_header('Set-Cookie', UID)
+            self.send_header('Set-Cookie', name)
+            self.end_headers()
+            self.wfile.write("success".format(self.path).encode('utf-8'))
+        else:
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', 'https://127.0.0.1')
+            self.end_headers()
+            self.end_headers()
+            self.wfile.write("fail".format(self.path).encode('utf-8'))
+                
 
     def do_OPTIONS(self):
         if self.path in ('*', '/login'):
