@@ -10,10 +10,15 @@ def main():
     cur = conn.cursor()
     cur.execute('''CREATE TABLE users 
                     (id INTEGER PRIMARY KEY AUTOINCREMENT, username varchar(255), passwords char(256), cookie char(256))''')
-    cur.execute('''INSERT INTO users VALUES (10000, 'admin', '5aa8765f576b6c12dc5c0d2548861ef965bb7b448ca6ae23d404dc52ce24c0df', '')''')
+    cur.execute('''INSERT INTO users VALUES (100000, 'admin', '5aa8765f576b6c12dc5c0d2548861ef965bb7b448ca6ae23d404dc52ce24c0df', '')''')
+    cur.execute('''CREATE TABLE texts 
+                    (id INTEGER PRIMARY KEY AUTOINCREMENT, userID INTEGER, texthash char(256), textname varchar(255))''')
+    cur.execute('''INSERT INTO texts VALUES (10000, 100000, 'default', 'defaultAdmin')''')
+    cur.execute('''INSERT INTO texts VALUES (10001, 100000, 'defaultA', 'defaultAdminA')''')
     conn.commit()
     conn.close()
 
+    # change here
     user = {'name':'', 'password':''}
     db = dbC()
     db.reg(user)
