@@ -15,6 +15,21 @@ class dbC():
         # self.conn.close()
 
     def reg(self, user):
+        """
+        User regsiter.
+        1. Check whether email exist in database.
+        2. INSERT into users.
+        3. SELECT from users --> id.
+        4. create UID from time, id and passwordHash.
+        5. return cookie.
+
+        Parameters:
+            user - (username, email, passwordHash)
+
+        Returns:
+            cookie for successful sign up.
+            False for existing email address.
+        """
         t = (user['email'], )
         self.cur.execute('SELECT * FROM users WHERE email=?', t)
         t = self.cur.fetchone()
@@ -34,9 +49,23 @@ class dbC():
             self.cur.execute('UPDATE users SET cookie=? WHERE id=?', t)
             self.commit()
             self.conn.close()
-        return cookie
+            return cookie
 
     def login(self, user):
+        """
+        User login.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. create UID from time, id and passwordHash.
+        4. return cookie.
+
+        Parameters:
+            user - (username, passwordHash)
+
+        Returns:
+            cookie for successful login.
+            False when UID doesn't match name.
+        """
         t = (user['name'], user['password'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND passwords=?', t)
         t = self.cur.fetchone()
@@ -53,6 +82,20 @@ class dbC():
             return False
 
     def getlist(self, userhash):
+        """
+        Get user notes list.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. SELECT from texts --> all textname and texthash.
+        4. return js.array string.
+
+        Parameters:
+            user - (username, passwordHash)
+
+        Returns:
+            js.array string for query.
+            False when UID doesn't match name.
+        """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
@@ -77,6 +120,21 @@ class dbC():
             return False
 
     def delNotes(self, userhash, noteHash):
+        """
+        Delete user notes according to the noteHash.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. DELETE from texts <-- id and noteHash.
+        4. delete file on disk
+
+        Parameters:
+            user - (username, passwordHash)
+            noteHash - note hash not name
+
+        Returns:
+            True when UID matches name.
+            False when UID doesn't match name.
+        """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
@@ -92,6 +150,21 @@ class dbC():
             return False
         
     def dltext(self, userhash):
+        """
+        WARNING: !!!risk at not checking id and noteHash matches!!!
+        Download user notes according to the noteHash.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. SELECT from texts <-- whether id and noteHash matches.
+        4. read text and return
+
+        Parameters:
+            userhash - (username, passwordHash, noteHash)
+
+        Returns:
+            all_the_text when UID matches name.
+            False when UID doesn't match name or id doesn't match noteHash.
+        """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()

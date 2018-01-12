@@ -13,11 +13,29 @@ from dbC import dbC
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
+        """
+        Typical response. Send nothing but headers.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
     def __fail_response(self):
+        """
+        Fail response. Send Access-Control-Allow headers and "fail" in data.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         self.send_response(200)
         self.send_header('Access-Control-Allow-Credentials', 'true')
         self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
@@ -25,12 +43,30 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write("fail".encode('utf-8'))
 
     def __headers_only(self):
+        """
+        Headers only response. Send Access-Control-Allow headers.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         self.send_response(200)
         self.send_header('Access-Control-Allow-Credentials', 'true')
         self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
         self.end_headers()
 
     def __cookie_response(self, retCookie):
+        """
+        Success response. Send Access-Control-Allow headers and "success" in data.
+
+        Parameters:
+            retCookie - (UID, name)
+
+        Returns:
+            None
+        """
         # Cus this is a cross domain setting cookies, so the following helps.
         # https://www.cnblogs.com/anai/p/4238777.html
         # cookies expires
@@ -47,6 +83,17 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write("success".encode('utf-8'))
 
     def do_GET(self):
+        """
+        GET Methond at /getlist.
+        1. Get name and UID from cookie.
+        2. Send headers and db.getlist() in data.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         #logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
         #self._set_response()
         #self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
@@ -62,6 +109,21 @@ class S(BaseHTTPRequestHandler):
                 self.__fail_response()
 
     def do_POST(self):
+        """
+        POST Methond at /login /dltext /ultext /newtext /delNotes /reg.
+        For /dltext /ultext /newtext /delNotes
+        1. Get name and UID from cookie.
+        2. Send headers and corresponding data.
+        For /login /reg
+        1. Get name and passwordHash (and email) from post.data.
+        2. Send headers with Set-Cookie and corresponding data.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
         if self.path=="/login":
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
