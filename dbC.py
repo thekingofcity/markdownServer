@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import json
 import hashlib
@@ -14,9 +15,26 @@ class dbC():
         # self.conn.close()
 
     def reg(self, user):
-        t = (user['name'], hashlib.sha256(user['password'].encode("utf_8")).hexdigest())
-        self.cur.execute('''INSERT INTO users (username, passwords) VALUES (?,?)''', t)
-        self.commit()
+        t = (user['email'], )
+        self.cur.execute('SELECT * FROM users WHERE email=?', t)
+        t = self.cur.fetchone()
+        if t:
+            self.conn.close()
+            return False
+        else:
+            t = (user['name'], user['password'], user['email'])
+            self.cur.execute('''INSERT INTO users (username, passwords, email) VALUES (?, ?, ?)''', t)
+            self.commit()
+            t = (user['name'], user['password'])
+            self.cur.execute('SELECT * FROM users WHERE username=? AND passwords=?', t)
+            t = self.cur.fetchone()
+            cookie = str(time.time()) + str(t[0]) + user['password']
+            cookie = hashlib.sha256(cookie.encode("utf_8")).hexdigest()
+            t = (cookie, t[0])
+            self.cur.execute('UPDATE users SET cookie=? WHERE id=?', t)
+            self.commit()
+            self.conn.close()
+        return cookie
 
     def login(self, user):
         t = (user['name'], user['password'])
@@ -28,8 +46,10 @@ class dbC():
             t = (cookie, t[0])
             self.cur.execute('UPDATE users SET cookie=? WHERE id=?', t)
             self.commit()
+            self.conn.close()
             return cookie
         else:
+            self.conn.close()
             return False
 
     def getlist(self, userhash):
@@ -52,6 +72,21 @@ class dbC():
             else:
                 ret = ret + "]"
             return ret
+        else:
+            self.conn.close()
+            return False
+
+    def delNotes(self, userhash, noteHash):
+        t = (userhash['name'], userhash['UID'])
+        self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
+        t = self.cur.fetchone()
+        if t:
+            t = (t[0], noteHash)
+            self.cur.execute('DELETE FROM texts WHERE userID=? AND texthash=?', t)
+            self.conn.commit()
+            self.conn.close()
+            os.remove('data\\' + noteHash)
+            return True
         else:
             self.conn.close()
             return False
@@ -96,7 +131,6 @@ class dbC():
             t = (t[0], docHash, data['docName'])
             fileName = 'data\\' + docHash
             # check if there is a same name file under the folder
-            print(fileName)
             file_object = open(fileName, 'w')
             try:
                 file_object.write(data['data'])
