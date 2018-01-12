@@ -110,15 +110,22 @@ class dbC():
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
-        self.conn.close()
         if t:
-            file_object = open('data\\' + data['docHash'], 'w')
-            try:
-                file_object.write(data['data'])
-            finally:
-                file_object.close()
-            return True
+            t = (t[0], data['docHash'])
+            self.cur.execute('SELECT * FROM texts WHERE userID=? AND texthash=?', t)
+            t = self.cur.fetchone()
+            self.conn.close()
+            if t:
+                file_object = open('data\\' + data['docHash'], 'w')
+                try:
+                    file_object.write(data['data'])
+                finally:
+                    file_object.close()
+                return True
+            else:
+                return False
         else:
+            self.conn.close()
             return False
 
     def newtext(self, userhash, data):

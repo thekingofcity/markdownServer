@@ -17,6 +17,35 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
+    def __fail_response(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
+        self.end_headers()
+        self.wfile.write("fail".encode('utf-8'))
+
+    def __headers_only(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
+        self.end_headers()
+
+    def __cookie_response(self, retCookie):
+        # Cus this is a cross domain setting cookies, so the following helps.
+        # https://www.cnblogs.com/anai/p/4238777.html
+        # cookies expires
+        # http://michelanders.blogspot.com/2011/10/managing-session-id-with-cookies.html
+        # http://b.leppoc.net/2010/02/12/simple-webserver-in-python/
+        UID = "UID=" + retCookie[0] + ";Max-Age=604800"
+        name = "name=" + retCookie[1] + ";Max-Age=604800"
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
+        self.send_header('Set-Cookie', UID)
+        self.send_header('Set-Cookie', name)
+        self.end_headers()
+        self.wfile.write("success".encode('utf-8'))
+
     def do_GET(self):
         #logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
         #self._set_response()
@@ -27,17 +56,10 @@ class S(BaseHTTPRequestHandler):
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value}
                 db = dbC()
                 list_ = db.getlist(userhash)
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
+                self.__headers_only()
                 self.wfile.write(list_.encode('utf-8'))
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
 
     def do_POST(self):
         if self.path=="/login":
@@ -50,29 +72,9 @@ class S(BaseHTTPRequestHandler):
             cookie = db.login(user)
             print(cookie)
             if(cookie):
-                # The next line will do send_response(200) end_headers().
-                # self._set_response()
-
-                # Cus this is a cross domain setting cookies, so the following helps.
-                # https://www.cnblogs.com/anai/p/4238777.html
-                self.send_response(200)
-                # cookies expires
-                # http://michelanders.blogspot.com/2011/10/managing-session-id-with-cookies.html
-                # http://b.leppoc.net/2010/02/12/simple-webserver-in-python/
-                UID = "UID=" + cookie + ";Max-Age=604800"
-                name = "name=" + user['name'] + ";Max-Age=604800"
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.send_header('Set-Cookie', UID)
-                self.send_header('Set-Cookie', name)
-                self.end_headers()
-                self.wfile.write("success".encode('utf-8'))
+                self.__cookie_response((cookie, user['name']))
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         elif self.path=="/dltext":
             if "Cookie" in self.headers:
                 c = cookies.SimpleCookie(self.headers["Cookie"])
@@ -83,23 +85,12 @@ class S(BaseHTTPRequestHandler):
                 db = dbC()
                 all_the_text = db.dltext(userhash)
                 if all_the_text:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
+                    self.__headers_only()
                     self.wfile.write(all_the_text.encode('utf-8'))
                 else:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
-                    self.wfile.write("fail".encode('utf-8'))
+                    self.__fail_response()
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         elif self.path=="/ultext":
             if "Cookie" in self.headers:
                 c = cookies.SimpleCookie(self.headers["Cookie"])
@@ -110,23 +101,12 @@ class S(BaseHTTPRequestHandler):
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value}
                 db = dbC()
                 if db.ultext(userhash, post_data_dict):
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
+                    self.__headers_only()
                     self.wfile.write("success".encode('utf-8'))
                 else:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
-                    self.wfile.write("fail".encode('utf-8'))
+                    self.__fail_response()
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         elif self.path=="/newtext":
             if "Cookie" in self.headers:
                 c = cookies.SimpleCookie(self.headers["Cookie"])
@@ -138,23 +118,12 @@ class S(BaseHTTPRequestHandler):
                 db = dbC()
                 docHash = db.newtext(userhash, post_data_dict)
                 if docHash:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
+                    self.__headers_only()
                     self.wfile.write(docHash.encode('utf-8'))
                 else:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
-                    self.wfile.write("fail".encode('utf-8'))
+                    self.__fail_response()
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         elif self.path=="/delNotes":
             if "Cookie" in self.headers:
                 c = cookies.SimpleCookie(self.headers["Cookie"])
@@ -166,23 +135,12 @@ class S(BaseHTTPRequestHandler):
                 if db.delNotes(userhash, post_data_dict['noteHash']):
                     db = dbC()
                     list_ = db.getlist(userhash)
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
+                    self.__headers_only()
                     self.wfile.write(list_.encode('utf-8'))
                 else:
-                    self.send_response(200)
-                    self.send_header('Access-Control-Allow-Credentials', 'true')
-                    self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                    self.end_headers()
-                    self.wfile.write("fail".encode('utf-8'))
+                    self.__fail_response()
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         elif self.path=="/reg":
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
@@ -191,28 +149,11 @@ class S(BaseHTTPRequestHandler):
             cookie = db.reg(user)
             print(cookie)
             if(cookie):
-                # Cus this is a cross domain setting cookies, so the following helps.
-                # https://www.cnblogs.com/anai/p/4238777.html
-                self.send_response(200)
-                # cookies expires
-                # http://michelanders.blogspot.com/2011/10/managing-session-id-with-cookies.html
-                # http://b.leppoc.net/2010/02/12/simple-webserver-in-python/
-                UID = "UID=" + cookie + ";Max-Age=604800"
-                name = "name=" + user['name'] + ";Max-Age=604800"
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.send_header('Set-Cookie', UID)
-                self.send_header('Set-Cookie', name)
-                self.end_headers()
-                self.wfile.write("success".encode('utf-8'))
+                self.__cookie_response((cookie, user['name']))
             else:
-                self.send_response(200)
-                self.send_header('Access-Control-Allow-Credentials', 'true')
-                self.send_header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-                self.end_headers()
-                self.wfile.write("fail".encode('utf-8'))
+                self.__fail_response()
         else:
-            pass    
+            pass
 
     def do_OPTIONS(self):
         bool_ = self.path in ('*', '/login') or self.path in ('*', '/dltext')\
