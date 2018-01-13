@@ -1,3 +1,6 @@
+"""
+Process the args from SimpleHTTPServer
+"""
 import os
 import sqlite3
 import json
@@ -266,3 +269,7 @@ class dbC():
         else:
             self.conn.close()
             return False
+
+if __name__ == "__main__":
+    import dbC
+    print(help(dbC))
