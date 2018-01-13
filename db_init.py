@@ -3,7 +3,7 @@ import sqlite3
 import hashlib
 from dbC import dbC
 
-def main():
+def db_init_main():
     if os.path.exists("test.db"):
         os.remove("test.db")
     conn = sqlite3.connect('test.db')
@@ -20,6 +20,6 @@ def main():
     conn.close()
 
 if __name__ == '__main__':
-    main()
+    db_init_main()
     # pw = "".encode("utf_8")
     # print(hashlib.sha256(pw).hexdigest())

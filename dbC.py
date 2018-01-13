@@ -29,7 +29,7 @@ class dbC():
         5. return cookie.
 
         Parameters:
-            user - (username, email, passwordHash)
+            user - {'name': username, 'email': email, 'password': passwordHash}
 
         Returns:
             cookie for successful sign up.
@@ -66,7 +66,7 @@ class dbC():
         4. return cookie.
 
         Parameters:
-            user - (username, passwordHash)
+            user - {'name': username, 'password': passwordHash}
 
         Returns:
             cookie for successful login.
@@ -96,7 +96,7 @@ class dbC():
         4. return js.array string.
 
         Parameters:
-            user - (username, passwordHash)
+            user - {'name': username, 'UID': UID}
 
         Returns:
             js.array string for query.
@@ -134,7 +134,7 @@ class dbC():
         4. delete file on disk
 
         Parameters:
-            user - (username, passwordHash)
+            user - {'name': username, 'UID': UID}
             docHash - note hash not name
 
         Returns:
@@ -164,7 +164,7 @@ class dbC():
         4. read text and return
 
         Parameters:
-            userhash - (username, passwordHash, docHash)
+            user - {'name': username, 'UID': UID, 'docHash': docHash}
 
         Returns:
             all_the_text when UID matches name.
@@ -200,8 +200,8 @@ class dbC():
         4. write text and return
 
         Parameters:
-            userhash - (username, UID)
-            data - (docHash, noteStr)
+            user - {'name': username, 'UID': UID}
+            data - {'docHash': docHash, 'data': data}
 
         Returns:
             True when UID matches name and userID matches docHash.
@@ -238,8 +238,8 @@ class dbC():
         4. write text and return docHash
 
         Parameters:
-            userhash - (username, UID)
-            data - (docName, noteStr)
+            user - {'name': username, 'UID': UID}
+            data - {'docName': docName, 'data': data}
 
         Returns:
             docHash when UID matches name and write successfully.

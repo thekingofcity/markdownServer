@@ -220,6 +220,10 @@ class S(BaseHTTPRequestHandler):
             pass
 
     def do_OPTIONS(self):
+        """
+        Morden browsers use OPTIONS method before CORS POST. This func process it and return Access-Control-Allow Headers
+        Further intel: https://stackoverflow.com/questions/38375124/what-is-the-reason-behind-using-option-request-before-post-on-cors-requests
+        """
         bool_ = self.path in ('*', '/login') or self.path in ('*', '/dltext')\
         or self.path in ('*', '/ultext') or self.path in ('*', '/newtext')\
         or self.path in ('*', '/delNotes') or self.path in ('*', '/reg')
