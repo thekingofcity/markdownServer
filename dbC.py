@@ -5,14 +5,19 @@ import hashlib
 import time
 
 class dbC():
-    
-    def __init__(self):
-        self.conn = sqlite3.connect('test.db')
+    """
+    Manipulate the database.
+    """
+
+    def __init__(self, dbLoaction):
+        self.conn = sqlite3.connect(dbLoaction)
         self.cur = self.conn.cursor()
-    
+
     def commit(self):
+        """
+        Deprecated
+        """
         self.conn.commit()
-        # self.conn.close()
 
     def reg(self, user):
         """
@@ -38,7 +43,8 @@ class dbC():
             return False
         else:
             t = (user['name'], user['password'], user['email'])
-            self.cur.execute('''INSERT INTO users (username, passwords, email) VALUES (?, ?, ?)''', t)
+            self.cur.execute('''INSERT INTO users
+                (username, passwords, email) VALUES (?, ?, ?)''', t)
             self.commit()
             t = (user['name'], user['password'])
             self.cur.execute('SELECT * FROM users WHERE username=? AND passwords=?', t)
@@ -86,7 +92,7 @@ class dbC():
         Get user notes list.
         1. Check whether name and UID exist in database.
         2. SELECT from users --> id.
-        3. SELECT from texts --> all textname and texthash.
+        3. SELECT from texts --> all docname and docHash.
         4. return js.array string.
 
         Parameters:
@@ -106,7 +112,7 @@ class dbC():
             self.conn.close()
             list_ = {}
             ret = "["
-            if len(listFromDb) > 0:
+            if listFromDb:
                 for i in listFromDb:
                     list_["name"] = i[3]
                     list_["hash"] = i[2]
@@ -119,17 +125,17 @@ class dbC():
             self.conn.close()
             return False
 
-    def delNotes(self, userhash, noteHash):
+    def delNotes(self, userhash, docHash):
         """
-        Delete user notes according to the noteHash.
+        Delete user notes according to the docHash.
         1. Check whether name and UID exist in database.
         2. SELECT from users --> id.
-        3. DELETE from texts <-- id and noteHash.
+        3. DELETE from texts <-- id and docHash.
         4. delete file on disk
 
         Parameters:
             user - (username, passwordHash)
-            noteHash - note hash not name
+            docHash - note hash not name
 
         Returns:
             True when UID matches name.
@@ -139,11 +145,11 @@ class dbC():
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
         if t:
-            t = (t[0], noteHash)
-            self.cur.execute('DELETE FROM texts WHERE userID=? AND texthash=?', t)
+            t = (t[0], docHash)
+            self.cur.execute('DELETE FROM texts WHERE userID=? AND docHash=?', t)
             self.conn.commit()
             self.conn.close()
-            os.remove('data\\' + noteHash)
+            os.remove('data\\' + docHash)
             return True
         else:
             self.conn.close()
@@ -151,41 +157,62 @@ class dbC():
         
     def dltext(self, userhash):
         """
-        WARNING: !!!risk at not checking id and noteHash matches!!!
-        Download user notes according to the noteHash.
+        Send user notes according to the docHash. Downloadtext refers to client side.
         1. Check whether name and UID exist in database.
         2. SELECT from users --> id.
-        3. SELECT from texts <-- whether id and noteHash matches.
+        3. SELECT from texts <-- whether id and docHash matches.
         4. read text and return
 
         Parameters:
-            userhash - (username, passwordHash, noteHash)
+            userhash - (username, passwordHash, docHash)
 
         Returns:
             all_the_text when UID matches name.
-            False when UID doesn't match name or id doesn't match noteHash.
+            False when UID doesn't match name or id doesn't match docHash.
         """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
-        self.conn.close()
         if t:
-            file_object = open('data\\' + userhash['docHash'])
-            try:
-                all_the_text = file_object.read()
-            finally:
-                file_object.close()
-            return all_the_text
+            t = (t[0], userhash['docHash'])
+            self.cur.execute('SELECT * FROM texts WHERE userID=? AND docHash=?', t)
+            t = self.cur.fetchone()
+            self.conn.close()
+            if t:
+                file_object = open('data\\' + userhash['docHash'])
+                try:
+                    all_the_text = file_object.read()
+                finally:
+                    file_object.close()
+                return all_the_text
+            else:
+                return False
         else:
+            self.conn.close()
             return False
 
     def ultext(self, userhash, data):
+        """
+        Save user notes according to the docHash. Uploadtext refers to client side.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. SELECT from texts <-- whether id and docHash matches.
+        4. write text and return
+
+        Parameters:
+            userhash - (username, UID)
+            data - (docHash, noteStr)
+
+        Returns:
+            True when UID matches name and userID matches docHash.
+            False vice versa.
+        """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
         if t:
             t = (t[0], data['docHash'])
-            self.cur.execute('SELECT * FROM texts WHERE userID=? AND texthash=?', t)
+            self.cur.execute('SELECT * FROM texts WHERE userID=? AND docHash=?', t)
             t = self.cur.fetchone()
             self.conn.close()
             if t:
@@ -202,6 +229,22 @@ class dbC():
             return False
 
     def newtext(self, userhash, data):
+        """
+        WARNING: !!!check if there is a same name file under the folder!!!
+        Save user notes without docHash.
+        1. Check whether name and UID exist in database.
+        2. SELECT from users --> id.
+        3. create docHash from time, docName and passwordHash.
+        4. write text and return docHash
+
+        Parameters:
+            userhash - (username, UID)
+            data - (docName, noteStr)
+
+        Returns:
+            docHash when UID matches name and write successfully.
+            False when UID doesn't match name.
+        """
         t = (userhash['name'], userhash['UID'])
         self.cur.execute('SELECT * FROM users WHERE username=? AND cookie=?', t)
         t = self.cur.fetchone()
@@ -216,7 +259,7 @@ class dbC():
                 file_object.write(data['data'])
             finally:
                 file_object.close()
-            self.cur.execute('''INSERT INTO texts (userID, texthash, textname) VALUES (?, ?, ?)''', t)
+            self.cur.execute('''INSERT INTO texts (userID, docHash, docname) VALUES (?, ?, ?)''', t)
             self.commit()
             self.conn.close()
             return docHash

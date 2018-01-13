@@ -11,6 +11,8 @@ import logging
 import sqlite3
 from dbC import dbC
 
+dbLoaction = "test.db"
+
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
         """
@@ -101,7 +103,7 @@ class S(BaseHTTPRequestHandler):
             if "Cookie" in self.headers:
                 c = cookies.SimpleCookie(self.headers["Cookie"])
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value}
-                db = dbC()
+                db = dbC(dbLoaction)
                 list_ = db.getlist(userhash)
                 self.__headers_only()
                 self.wfile.write(list_.encode('utf-8'))
@@ -130,7 +132,7 @@ class S(BaseHTTPRequestHandler):
             # logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             #         str(self.path), str(self.headers), post_data.decode('utf-8'))
             user = eval(post_data) # <--- Converts the data to dict
-            db = dbC()
+            db = dbC(dbLoaction)
             cookie = db.login(user)
             print(cookie)
             if(cookie):
@@ -144,7 +146,7 @@ class S(BaseHTTPRequestHandler):
                 post_data = self.rfile.read(content_length) # <--- Gets the data itself
                 post_data_dict = eval(post_data) # <--- Converts the data to dict
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value, 'docHash':post_data_dict['docHash']}
-                db = dbC()
+                db = dbC(dbLoaction)
                 all_the_text = db.dltext(userhash)
                 if all_the_text:
                     self.__headers_only()
@@ -161,7 +163,7 @@ class S(BaseHTTPRequestHandler):
                 post_data = self.rfile.read(content_length) # <--- Gets the data itself
                 post_data_dict = eval(post_data) # <--- Converts the data to dict
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value}
-                db = dbC()
+                db = dbC(dbLoaction)
                 if db.ultext(userhash, post_data_dict):
                     self.__headers_only()
                     self.wfile.write("success".encode('utf-8'))
@@ -177,7 +179,7 @@ class S(BaseHTTPRequestHandler):
                 post_data = self.rfile.read(content_length) # <--- Gets the data itself
                 post_data_dict = eval(post_data) # <--- Converts the data to dict
                 userhash = {'name': c['name'].value, 'UID': c['UID'].value}
-                db = dbC()
+                db = dbC(dbLoaction)
                 docHash = db.newtext(userhash, post_data_dict)
                 if docHash:
                     self.__headers_only()
@@ -193,9 +195,9 @@ class S(BaseHTTPRequestHandler):
                 content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
                 post_data = self.rfile.read(content_length) # <--- Gets the data itself
                 post_data_dict = eval(post_data) # <--- Converts the data to dict
-                db = dbC()
-                if db.delNotes(userhash, post_data_dict['noteHash']):
-                    db = dbC()
+                db = dbC(dbLoaction)
+                if db.delNotes(userhash, post_data_dict['docHash']):
+                    db = dbC(dbLoaction)
                     list_ = db.getlist(userhash)
                     self.__headers_only()
                     self.wfile.write(list_.encode('utf-8'))
@@ -207,7 +209,7 @@ class S(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
             post_data = self.rfile.read(content_length) # <--- Gets the data itself
             user = eval(post_data) # <--- Converts the data to dict
-            db = dbC()
+            db = dbC(dbLoaction)
             cookie = db.reg(user)
             print(cookie)
             if(cookie):
