@@ -10,6 +10,9 @@ class test_dbC(unittest.TestCase):
     dbLoaction = "test.db"
     passwordHash = hashlib.sha256("ccc".encode("utf_8")).hexdigest()
 
+    # Unittest with args. Save and load through json in file
+    # https://www.zhihu.com/question/34754958
+    # http://blog.csdn.net/huilan_same/article/details/52944782
     def setUp(self):
         self.userhash = {"name": "", "UID": ""}
         self.dochash = {"secondDocHash": "", "fisrtDocHash": ""}
@@ -17,14 +20,10 @@ class test_dbC(unittest.TestCase):
         with open("unittestConfuserhash", "r") as f:
             json_userhash = json.load(f)
         self.userhash.update(json_userhash)
-        for k,v in self.userhash.items():
-            setattr(self, k, v)
 
         with open("unittestConfdochash", "r") as f:
             json_dochash = json.load(f)
         self.dochash.update(json_dochash)
-        for k,v in self.dochash.items():
-            setattr(self, k, v)
     
     def tearDown(self):
 
