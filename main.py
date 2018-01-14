@@ -88,7 +88,7 @@ class S(BaseHTTPRequestHandler):
         """
         GET Methond at /getlist.
         1. Get name and UID from cookie.
-        2. Send headers and db.getlist() in data.
+        2. Send headers and data from db.getlist().
 
         Parameters:
             None
